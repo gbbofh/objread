@@ -1,0 +1,4 @@
+Simply maps an .obj model file to memory, and loads more important data into a data structure.
+Relies heavily on the Linux API's, with less reliance on the C std library.
+
+This is still a work in progress, and is mostly meant for me to sharpen my skills.
