@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
 	char vstr[256];
 	memcpy(vstr, "-143, 2, 3", 11);
     load_obj(argv[1]);
-    //load_vertex(vstr, &vert);
+    load_vertex(vstr, &vert);
     printf("[%f, %f, %f]\n", vert.position[0], vert.position[1], vert.position[2]);
     return 0;
 }
@@ -59,7 +59,6 @@ bool is_eol(char c) {
     switch(c) {
         case '\n':
         case '\r':
-        // case '\0':
         return true;
         break;
         default:
@@ -81,7 +80,6 @@ void load_obj(char* path) {
 
     fstat(globals.file_d, &file_status);
     globals.file_len = file_status.st_size;
-
     globals.file_addr = mmap(0, globals.file_len, PROT_READ,
                             MAP_PRIVATE, globals.file_d, 0);
     globals.file_eof = (char*)globals.file_addr + globals.file_len;
@@ -90,7 +88,7 @@ void load_obj(char* path) {
         close(globals.file_d);
         exit(EXIT_FAILURE);
     }
-    printf("%s\n", (char*)globals.file_addr);
+    
     // TODO: Call to functions to parse obj data
     load_meshdata();
 
@@ -118,25 +116,31 @@ void scan_obj() {
     globals.mesh.indx = malloc(globals.mesh.num_indx * sizeof(int));
 }
 
+void load_meshdata() {
+    char* str = globals.file_addr;
+    scan_obj();
+    
+}
+
+/* Updated to not bork the input data
+ * TODO: This function is vulnerable to a buffer overlow.
+ * TODO: Need to add support for vertex normals and uv coords.
+ * TODO: Will loop forever if encounters a stray comma. Fix.
+*/
 void load_vertex(char* str, vertex* vert) {
     if(str == NULL || vert == NULL) return;
     char* tmp = str;
-
+    char buf[256];
+    
     for(int i = 0; i < 3; i++) {
-        printf("i=%d\n", i);
-        while(isspace(*tmp)) printf("whitespace: %c\n", *tmp), tmp++;
+        while(isspace(*tmp) || *tmp == ',') tmp++;
         if(isdigit(*tmp) || *tmp == '.' || *tmp == '-' || *tmp == '+') {
-            printf("digit/pnct: %c\n", *tmp);
             str = tmp;
             tmp++;
-            while(isdigit(*tmp)) printf("digit: %c\n", *tmp), tmp++;
-            *tmp = '\0';
-            vert->position[i] = atof(str);
-            tmp++;
+            while(isdigit(*tmp)) tmp++;
+            memset(buf, 0, 256);
+            memcpy(buf, str, ((char*)tmp - (char*)str));
+            vert->position[i] = atof(buf);
         }
     }
-}
-
-void load_meshdata() {
-    scan_obj();
 }
