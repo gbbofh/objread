@@ -125,7 +125,9 @@ void load_meshdata() {
 /* Updated to not bork the input data
  * TODO: This function is vulnerable to a buffer overlow.
  * TODO: Need to add support for vertex normals and uv coords.
- * TODO: Will loop forever if encounters a stray comma. Fix.
+ *          Easiest way to do this may be to restructure and scan
+ *          the file twice. Once to count vertices,
+ *          and the second time to fill out offsets to related data.
 */
 void load_vertex(char* str, vertex* vert) {
     if(str == NULL || vert == NULL) return;
