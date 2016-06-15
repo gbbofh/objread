@@ -111,6 +111,7 @@ void load_obj(char* path) {
 // TODO: Move inside of do/while to own function for code reuse.
 // TODO: Update to index locations of vertices into linked list.
 //          Be sure to add handling for normals and texture coords.
+// TODO: Fix segfault regarding linked list...
 void scan_obj() {
     obj_vertex vertex_list;
     obj_vertex* cvert = &vertex_list;
@@ -119,11 +120,13 @@ void scan_obj() {
         if(*tmp == 'v' && isspace(*(tmp + 1))) {
             cvert->pos = tmp + 2;
             cvert->next = malloc(sizeof(obj_vertex));
-            printf("%p\n", cvert);
             cvert = cvert->next;
             cvert->next = NULL;
+            
             globals.mesh.num_vert++;
         } else if(*tmp == 'f' && isspace(*(tmp + 1))) {
+            // TODO: Store indices in a linked list
+            //          To make them easier to process later.
             globals.mesh.num_indx++;
         }
         while(!is_eol(*(++tmp)) && tmp != (char*)globals.file_addr + globals.file_len);
@@ -133,9 +136,9 @@ void scan_obj() {
     globals.mesh.indx = malloc(globals.mesh.num_indx * sizeof(int));
     
     // Clean up linked list to avoid memory leak.
-    cvert = &vertex_list;
     obj_vertex* tvert;
     while(vertex_list.next != NULL) {
+        cvert = &vertex_list;
         while(cvert->next != NULL) tvert = cvert, cvert = cvert->next;
         free(cvert);
         tvert->next = NULL;
