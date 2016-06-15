@@ -9,6 +9,16 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
+#define error() while(1) {printf("Error 0x%08X: %s\n", errno, strerror(errno)), exit(EXIT_FAILURE);}
+#define debug(str) printf("Debug: %s");
+
+typedef struct obj_vertex {
+    char* pos;
+    char* norm;
+    char* tex;
+    struct obj_vertex* next;
+} obj_vertex;
+
 typedef struct {
     float position[3];
     float normal[3];
@@ -99,35 +109,53 @@ void load_obj(char* path) {
 }
 
 // TODO: Move inside of do/while to own function for code reuse.
+// TODO: Update to index locations of vertices into linked list.
+//          Be sure to add handling for normals and texture coords.
 void scan_obj() {
+    obj_vertex vertex_list;
+    obj_vertex* cvert = &vertex_list;
     char* tmp = globals.file_addr;
     do {
         if(*tmp == 'v' && isspace(*(tmp + 1))) {
+            cvert->pos = tmp + 2;
+            cvert->next = malloc(sizeof(obj_vertex));
+            printf("%p\n", cvert);
+            cvert = cvert->next;
+            cvert->next = NULL;
             globals.mesh.num_vert++;
         } else if(*tmp == 'f' && isspace(*(tmp + 1))) {
             globals.mesh.num_indx++;
         }
         while(!is_eol(*(++tmp)) && tmp != (char*)globals.file_addr + globals.file_len);
     } while(tmp++ != globals.file_eof);
-    printf("vertices:\t%d\n", globals.mesh.num_vert);
-    printf("indices:\t%d\n", globals.mesh.num_indx);
 
     globals.mesh.vert = malloc(globals.mesh.num_vert * sizeof(vertex));
     globals.mesh.indx = malloc(globals.mesh.num_indx * sizeof(int));
+    
+    // Clean up linked list to avoid memory leak.
+    cvert = &vertex_list;
+    obj_vertex* tvert;
+    while(vertex_list.next != NULL) {
+        while(cvert->next != NULL) tvert = cvert, cvert = cvert->next;
+        free(cvert);
+        tvert->next = NULL;
+    }
 }
 
 void load_meshdata() {
     char* str = globals.file_addr;
     scan_obj();
-    
 }
 
 /* Updated to not bork the input data
- * TODO: This function is vulnerable to a buffer overlow.
  * TODO: Need to add support for vertex normals and uv coords.
  *          Easiest way to do this may be to restructure and scan
  *          the file twice. Once to count vertices,
  *          and the second time to fill out offsets to related data.
+ *          From then can fill out meshdata struct by parsing data
+ *          from filled out offsets.
+ * ALTERNATIVE: fill out a linked list containing offsets and expand
+*           scan to include vertex normals and texture coords.
 */
 void load_vertex(char* str, vertex* vert) {
     if(str == NULL || vert == NULL) return;
@@ -141,7 +169,7 @@ void load_vertex(char* str, vertex* vert) {
             tmp++;
             while(isdigit(*tmp)) tmp++;
             memset(buf, 0, 256);
-            memcpy(buf, str, ((char*)tmp - (char*)str));
+            if((char*)tmp - (char*)str < 256)   memcpy(buf, str, ((char*)tmp - (char*)str));
             vert->position[i] = atof(buf);
         }
     }
