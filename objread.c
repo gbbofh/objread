@@ -1,179 +1,133 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
+#include "objread.h"
+#include "common.h"
 
-#include <fcntl.h>
-#include <ctype.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
+void read_obj(void* base, void* eof, obj_file* obj) {
+    char*       vp_base = base;
+    char*       vt_base = base;
+    char*       vn_base = base;
+    char*       fi_base = base;
+    char*       tmp;
+    obj_vertex* cvert;
+    obj_index*  cind;
+    int i;
 
-#define error() while(1) {printf("Error 0x%08X: %s\n", errno, strerror(errno)), exit(EXIT_FAILURE);}
-#define debug(str) printf("Debug: %s");
+    // Locate initial offsets in file
+    //while(vp_base < (char*)eof && *vp_base != 'v' && !isspace(*(vp_base + 1))) vp_base++;
+    //while(vt_base < (char*)eof && *vt_base != 'v' && *(vt_base + 1) != 't') vt_base++;
+    //while(vn_base < (char*)eof && *vn_base != 'v' && *(vn_base + 1) != 'n') vn_base++;
+    //while(fi_base < (char*)eof && *fi_base != 'f' && !isspace(*(fi_base + 1))) fi_base++;
 
-typedef struct obj_vertex {
-    char* pos;
-    char* norm;
-    char* tex;
-    struct obj_vertex* next;
-} obj_vertex;
-
-typedef struct {
-    float position[3];
-    float normal[3];
-    float uv[2];
-    int rgba;
-} vertex;
-
-typedef struct {
-    int num_vert;
-    int num_indx;
-    vertex* vert;
-    int* indx;
-} meshdata;
-
-struct global_data {
-    int file_d;
-    int file_len;
-    void* file_addr;
-    void* file_eof;
-    meshdata mesh;
-} globals;
-
-bool is_eol(char c);
-
-void load_vertex(char* str, vertex* vert);
-void load_obj(char* path);
-void scan_obj();
-void load_meshdata();
-
-int main(int argc, char* argv[]) {
-
-    memset(&globals, 0, sizeof(struct global_data));
-
-    if(argc < 2) {
-        exit(EXIT_FAILURE);
+    while(vp_base < (char*)eof) {
+        if(*vp_base == 'v' && isspace(*(vp_base + 1))) {
+            break;
+        }
+        while(*(vp_base++) != '\n' && vp_base < (char*)eof);
+    }
+    while(vt_base < (char*)eof) {
+        if(*vt_base == 'v' && *(vt_base + 1) == 't') {
+            break;
+        }
+        while(*(vt_base++) != '\n' && vt_base < (char*)eof);
+    }
+    while(vn_base < (char*)eof) {
+        if(*vn_base == 'v' && *(vn_base + 1) == 'n') {
+            break;
+        }
+        while(*(vn_base++) != '\n' && vn_base < (char*)eof);
+    }
+    while(fi_base < (char*)eof) {
+        if(*fi_base == 'f' && isspace(*(fi_base + 1))) {
+            break;
+        }
+        while(*(fi_base++) != '\n' && fi_base < (char*)eof);
     }
 
-    vertex vert;
-	char vstr[256];
-	memcpy(vstr, "-143, 2, 3", 11);
-    load_obj(argv[1]);
-    load_vertex(vstr, &vert);
-    printf("[%f, %f, %f]\n", vert.position[0], vert.position[1], vert.position[2]);
-    return 0;
-}
+    msg_log(LOG_INFO, "Vertex Positions start at 0x%p", vp_base);
+    msg_log(LOG_INFO, "Vertex UV Coords start at 0x%p", vt_base);
+    msg_log(LOG_INFO, "Vertex Normals start at 0x%p", vn_base);
+    msg_log(LOG_INFO, "Face Indices start at 0x%p", fi_base);
 
-bool is_eol(char c) {
-    switch(c) {
-        case '\n':
-        case '\r':
-        return true;
-        break;
-        default:
-        return false;
-        break;
-    }
-}
-
-void load_obj(char* path) {
-    if(path == NULL) return;
-
-    struct stat file_status;
-
-    globals.file_d = open(path, O_RDONLY);
-
-    if(globals.file_d < 0) {
-        exit(EXIT_FAILURE);
-    }
-
-    fstat(globals.file_d, &file_status);
-    globals.file_len = file_status.st_size;
-    globals.file_addr = mmap(0, globals.file_len, PROT_READ,
-                            MAP_PRIVATE, globals.file_d, 0);
-    globals.file_eof = (char*)globals.file_addr + globals.file_len;
-
-    if(globals.file_addr == MAP_FAILED) {
-        close(globals.file_d);
-        exit(EXIT_FAILURE);
-    }
-    
-    // TODO: Call to functions to parse obj data
-    load_meshdata();
-
-    if(globals.mesh.vert != NULL) free(globals.mesh.vert); globals.mesh.vert = NULL;
-    if(globals.mesh.indx != NULL) free(globals.mesh.indx); globals.mesh.indx = NULL;
-    munmap(globals.file_addr, globals.file_len);
-    close(globals.file_d);
-}
-
-// TODO: Move inside of do/while to own function for code reuse.
-// TODO: Update to index locations of vertices into linked list.
-//          Be sure to add handling for normals and texture coords.
-// TODO: Fix segfault regarding linked list...
-void scan_obj() {
-    obj_vertex vertex_list;
-    obj_vertex* cvert = &vertex_list;
-    char* tmp = globals.file_addr;
-    do {
+    i= 0;
+    tmp = vp_base;
+    cvert = &obj->verts;
+    while(tmp < (char*)eof) {
+        //printf("position tmp=%p\n", tmp);
         if(*tmp == 'v' && isspace(*(tmp + 1))) {
             cvert->pos = tmp + 2;
             cvert->next = malloc(sizeof(obj_vertex));
             cvert = cvert->next;
-            cvert->next = NULL;
-            
-            globals.mesh.num_vert++;
-        } else if(*tmp == 'f' && isspace(*(tmp + 1))) {
-            // TODO: Store indices in a linked list
-            //          To make them easier to process later.
-            globals.mesh.num_indx++;
+            i++;
         }
-        while(!is_eol(*(++tmp)) && tmp != (char*)globals.file_addr + globals.file_len);
-    } while(tmp++ != globals.file_eof);
-
-    globals.mesh.vert = malloc(globals.mesh.num_vert * sizeof(vertex));
-    globals.mesh.indx = malloc(globals.mesh.num_indx * sizeof(int));
-    
-    // Clean up linked list to avoid memory leak.
-    obj_vertex* tvert;
-    while(vertex_list.next != NULL) {
-        cvert = &vertex_list;
-        while(cvert->next != NULL) tvert = cvert, cvert = cvert->next;
-        free(cvert);
-        tvert->next = NULL;
+        while(*(tmp++) != '\n' && tmp < (char*)eof);
     }
-}
+    msg_log(LOG_INFO, "%d Vertices", i);
 
-void load_meshdata() {
-    char* str = globals.file_addr;
-    scan_obj();
-}
-
-/* Updated to not bork the input data
- * TODO: Need to add support for vertex normals and uv coords.
- *          Easiest way to do this may be to restructure and scan
- *          the file twice. Once to count vertices,
- *          and the second time to fill out offsets to related data.
- *          From then can fill out meshdata struct by parsing data
- *          from filled out offsets.
- * ALTERNATIVE: fill out a linked list containing offsets and expand
-*           scan to include vertex normals and texture coords.
-*/
-void load_vertex(char* str, vertex* vert) {
-    if(str == NULL || vert == NULL) return;
-    char* tmp = str;
-    char buf[256];
-    
-    for(int i = 0; i < 3; i++) {
-        while(isspace(*tmp) || *tmp == ',') tmp++;
-        if(isdigit(*tmp) || *tmp == '.' || *tmp == '-' || *tmp == '+') {
-            str = tmp;
-            tmp++;
-            while(isdigit(*tmp)) tmp++;
-            memset(buf, 0, 256);
-            if((char*)tmp - (char*)str < 256)   memcpy(buf, str, ((char*)tmp - (char*)str));
-            vert->position[i] = atof(buf);
+    tmp = vt_base;
+    cvert = &obj->verts;
+    while(tmp < (char*)eof) {
+        //printf("texture tmp=%p\n", tmp);
+        if(*tmp == 'v' && *(tmp + 1) == 't') {
+            cvert->tex = tmp;
+            cvert = cvert->next;
         }
+        while(*(tmp++) != '\n' && tmp < (char*)eof);
+    }
+
+    tmp = vn_base;
+    cvert = &obj->verts;
+    while(tmp < (char*)eof) {
+        //printf("normal tmp=%p\n", tmp);
+        if(*tmp == 'v' && *(tmp + 1) == 'n') {
+            cvert->norm = tmp;
+            cvert = cvert->next;
+        }
+        while(*(tmp++) != '\n' && tmp < (char*)eof);
+    }
+
+    i = 0;
+    tmp = fi_base;
+    cvert = NULL;
+    cind = &obj->inds;
+    while(tmp < (char*)eof) {
+        //printf("index tmp=%p\n", tmp);
+        if(*tmp == 'f' && isspace(*(tmp + 1))) {
+            cind->index = tmp;
+            cind->next = malloc(sizeof(obj_index));
+            cind = cind->next;
+            i++;
+        }
+        while(*(tmp++) != '\n' && tmp < (char*)eof);
+    }
+    msg_log(LOG_INFO, "%d Indices", i);
+}
+
+void free_obj(obj_file* obj) {
+    obj_vertex* vert_root = &obj->verts;
+    obj_index*  ind_root = &obj->inds;
+    obj_vertex* cvert;
+    obj_index*  cind;
+
+    while(vert_root->next != NULL) {
+        cvert = vert_root;
+        obj_vertex* tmp;
+        while(cvert->next != NULL) {
+            tmp = cvert;
+            cvert = cvert->next;
+        }
+        //printf("Freeing Vertex %p\n", cvert);
+        free(cvert);
+        tmp->next = NULL;
+    }
+
+    while(ind_root->next != NULL) {
+        cind = ind_root;
+        obj_index* tmp;
+        while(cind->next != NULL) {
+            tmp = cind;
+            cind = cind->next;
+        }
+        //printf("Freeing Index %p\n", cind);
+        free(cind);
+        tmp->next = NULL;
     }
 }
