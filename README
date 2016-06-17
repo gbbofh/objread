@@ -1,4 +1,5 @@
-Simply maps an .obj model file to memory, and loads more important data into a data structure.
-Relies heavily on the Linux API's, with less reliance on the C std library.
+This program is intended to load vertex and face data from Wavefront .obj files.
+It is currently undergoing heavy revision, and is subject to break unexpectedly as I continue to mess with it.
 
-This is still a work in progress, and is mostly meant for me to sharpen my skills.
+Currently written only to run on Linux systems, as it strays away from a lot of the standard library functions. At some point I may change that once
+I get it working at all.
