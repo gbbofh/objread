@@ -1,6 +1,8 @@
 #include "objread.h"
 #include "common.h"
 
+#define is_eol(str) (*str == '\n' || (*str == '\r' && *(str + 1) == '\n'))
+
 void read_obj(void* base, void* eof, obj_file* obj) {
     char*       vp_base = base;
     char*       vt_base = base;
@@ -12,12 +14,8 @@ void read_obj(void* base, void* eof, obj_file* obj) {
     int i;
 
     // Locate initial offsets in file
-    //while(vp_base < (char*)eof && *vp_base != 'v' && !isspace(*(vp_base + 1))) vp_base++;
-    //while(vt_base < (char*)eof && *vt_base != 'v' && *(vt_base + 1) != 't') vt_base++;
-    //while(vn_base < (char*)eof && *vn_base != 'v' && *(vn_base + 1) != 'n') vn_base++;
-    //while(fi_base < (char*)eof && *fi_base != 'f' && !isspace(*(fi_base + 1))) fi_base++;
-
-    while(vp_base < (char*)eof) {
+    // OLD CODE. Big and clunky. Can maybe condense to one line each?
+    /*while(vp_base < (char*)eof) {
         if(*vp_base == 'v' && isspace(*(vp_base + 1))) {
             break;
         }
@@ -40,7 +38,13 @@ void read_obj(void* base, void* eof, obj_file* obj) {
             break;
         }
         while(*(fi_base++) != '\n' && fi_base < (char*)eof);
-    }
+    }*/
+
+    // Boop. Nested while loops that do the same thing as above.
+    while(vp_base < (char*)eof && *vp_base != 'v' && !isspace(*(vp_base + 1))) while(vp_base < (char*)eof && !is_eol(vp_base)) vp_base++;
+    while(vt_base < (char*)eof && *vt_base != 'v' && !isspace(*(vt_base + 1))) while(vt_base < (char*)eof && !is_eol(vt_base)) vt_base++;
+    while(vn_base < (char*)eof && *vn_base != 'v' && !isspace(*(vn_base + 1))) while(vn_base < (char*)eof && !is_eol(vn_base)) vn_base++;
+    while(fi_base < (char*)eof && *fi_base != 'v' && !isspace(*(fi_base + 1))) while(fi_base < (char*)eof && !is_eol(fi_base)) fi_base++;
 
     msg_log(LOG_INFO, "Vertex Positions start at 0x%p", vp_base);
     msg_log(LOG_INFO, "Vertex UV Coords start at 0x%p", vt_base);

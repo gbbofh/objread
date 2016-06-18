@@ -11,6 +11,7 @@ typedef struct {
     int num_verts;
     vertex* verts;
     int num_indx;
+    int* indx;
 } meshdata;
 
 #endif

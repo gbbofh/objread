@@ -1,6 +1,5 @@
 #include <stdarg.h>
 #include <limits.h>
-#include "log.h"
 #include "common.h"
 
 static int logfd = -1;
