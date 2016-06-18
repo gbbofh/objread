@@ -12,7 +12,7 @@ void open_log() {
         mkdir(LOGPATH, 0700);
         getcwd(buf, PATH_MAX);
         chdir(LOGPATH);
-        logfd = creat(LOGNAME, O_CREAT);
+        logfd = open(LOGNAME, O_CREAT|O_RDWR, S_IRUSR|S_IRGRP|S_IROTH);
         chdir(buf);
     }
 }
