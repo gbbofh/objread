@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
     fd.path = "airboat.obj";
 
     if(open_file(&fd) != true) {
-        error();
+        fatal();
     }
 
     read_obj(fd.addr, (char*)fd.addr + fd.fstat.st_size, &of);

@@ -1,8 +1,6 @@
 #include "objread.h"
 #include "common.h"
 
-//#define is_eol(str) (*str == '\n' || (*str == '\r' && *(str + 1) == '\n'))
-//#define skip_line(str, max)  while(str < max || !is_eol(str)) str++
 
 void read_obj(void* base, void* eof, obj_file* obj) {
     char*       vp_base = base;
@@ -15,40 +13,32 @@ void read_obj(void* base, void* eof, obj_file* obj) {
     int i;
 
     // Locate initial offsets in file
-    // Big and clunky. Can maybe condense to one line each?
-    // Will do for now b ecause my other version of these lines
-    // Does not work at all.
+    // Would like to come up with easier/shorter/prettier way to do this.
+    // Can't seem to get it working though. Will come back and refactor.
     while(vp_base < (char*)eof) {
         if(*vp_base == 'v' && isspace(*(vp_base + 1))) {
             break;
         }
-        while(*(vp_base++) != '\n' && vp_base < (char*)eof);
+        while(vp_base < (char*)eof && *(vp_base++) != '\n');
     }
     while(vt_base < (char*)eof) {
         if(*vt_base == 'v' && *(vt_base + 1) == 't') {
             break;
         }
-        while(*(vt_base++) != '\n' && vt_base < (char*)eof);
+        while(vt_base < (char*)eof && *(vt_base++) != '\n');
     }
     while(vn_base < (char*)eof) {
         if(*vn_base == 'v' && *(vn_base + 1) == 'n') {
             break;
         }
-        while(*(vn_base++) != '\n' && vn_base < (char*)eof);
+        while(vn_base < (char*)eof && *(vn_base++) != '\n');
     }
     while(fi_base < (char*)eof) {
         if(*fi_base == 'f' && isspace(*(fi_base + 1))) {
             break;
         }
-        while(*(fi_base++) != '\n' && fi_base < (char*)eof);
+        while(fi_base < (char*)eof && *(fi_base++) != '\n');
     }
-
-    // Boop. Nested while loops that do the same thing as above.
-    // Nevermind. Maybe I shouldn't make commits when I've had no sleep.
-    /*while(vp_base < (char*)eof || *vp_base != 'v' && !isspace(*(vp_base + 1))) skip_line(vp_base, (char*)eof);
-    while(vt_base < (char*)eof || *vt_base != 'v' && *(vt_base + 1) != 't') skip_line(vt_base, (char*)eof);
-    while(vn_base < (char*)eof || *vn_base != 'v' && *(vn_base + 1) != 'n') skip_line(vn_base, (char*)eof);
-    while(fi_base < (char*)eof || *fi_base != 'v' && !isspace(*(fi_base + 1))) skip_line(fi_base, (char*)eof);*/
 
     msg_log(LOG_INFO, "Vertex Positions start at 0x%p", vp_base);
     msg_log(LOG_INFO, "Vertex UV Coords start at 0x%p", vt_base);
