@@ -1,5 +1,6 @@
 #include "common.h"
 #include "objread.h"
+#include "mesh.h"
 
 typedef struct {
     char* path;
@@ -15,6 +16,7 @@ int main(int argc, char* argv[]) {
     open_log();
 
     obj_file of;
+    meshdata md;
 
     file_desc fd;
     memset(&fd, 0, sizeof(file_desc));
@@ -25,6 +27,8 @@ int main(int argc, char* argv[]) {
     }
 
     read_obj(fd.addr, (char*)fd.addr + fd.fstat.st_size, &of);
+    create_mesh(&of, &md);
+    delete_mesh(&md);
     free_obj(&of);
 
     close_file(&fd);
@@ -63,3 +67,13 @@ void close_file(file_desc* fd) {
     close(fd->fdesc);
     memset(fd, 0, sizeof(file_desc));
 }
+
+/*int test_triang(char* teststr) {
+    int inds = 0;
+    while(*teststr != '\n') {
+        if(isdigit(*teststr)) inds++;
+        while(isdigit(*teststr) && *(teststr + 1) != '\n') teststr++;
+        teststr++;
+    }
+    return (inds - 2) * 3;
+}*/

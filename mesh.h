@@ -18,5 +18,6 @@ typedef struct {
 
 void create_mesh(obj_file* objdata, meshdata* mesh);
 void delete_mesh(meshdata* mesh);
+void parse_faces(obj_face* objdata, meshdata* mesh);
 
 #endif
