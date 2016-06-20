@@ -28,14 +28,14 @@ void parse_faces(obj_face* oface, meshdata* mesh) {
 }
 
 
-void parse_face(obj_face* oface) {
+int num_inds(obj_face* oface) {
     char* cur = oface->face;
     int num_verts = 0;
-    int num_inds = 0;
     while(*cur != '\n') {
-        if(isdigit(*cur)) num_verts++, while(isdigit(*(cur++));
+        if(isdigit(*cur)) {
+            // Skip over rest of digits until whitespace.
+        }
         cur++;
     }
-
-    num_inds = (num_verts - 2) * 3;
+    return (num_verts - 2) * 3;
 }
