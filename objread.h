@@ -8,14 +8,16 @@ typedef struct obj_vertex {
     char* tex;
 } obj_vertex;
 
-typedef struct obj_index {
-    struct obj_index* next;
-    char* index;
-} obj_index;
+typedef struct obj_face {
+    struct obj_face* next;
+    char* face;
+} obj_face;
 
 typedef struct {
+    int vert_count;
+    int face_count;
     obj_vertex verts;
-    obj_index inds;
+    obj_face faces;
 } obj_file;
 
 void read_obj(void* base, void* eof, obj_file* obj);

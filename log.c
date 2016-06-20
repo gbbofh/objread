@@ -5,6 +5,7 @@
 static int logfd = -1;
 
 void open_log() {
+    struct stat st;
 /*    char buf[PATH_MAX];
     struct stat st;
     if(stat(LOGPATH, &st) == -1) {
@@ -16,6 +17,9 @@ void open_log() {
         logfd = open(LOGNAME, O_CREAT|O_RDWR, S_IRUSR|S_IRGRP|S_IROTH);
         chdir(buf);
     }*/
+    if(stat(LOGNAME, &st) != -1) {
+        unlink(LOGNAME);
+    }
     logfd = open(LOGNAME, O_CREAT|O_RDWR, S_IRUSR|S_IRGRP|S_IROTH);
     if(logfd < 0) {
         console_log(LOG_ERROR, "%s", strerror(errno));

@@ -1,7 +1,13 @@
 #include "objread.h"
 #include "common.h"
 
-
+/*
+ * READ_OBJ(VOID* BASE, VOID* EOF, OBJ_FILE* OBJ)
+ * Fills a buffer (obj_file struct) with offsets to
+ * data within the file. These offsets point to:
+ * Vertex position, texture, and normal data, as well
+ * as information for face/triangle indices.
+*/
 void read_obj(void* base, void* eof, obj_file* obj) {
     char*       vp_base = base;
     char*       vt_base = base;
@@ -9,7 +15,7 @@ void read_obj(void* base, void* eof, obj_file* obj) {
     char*       fi_base = base;
     char*       tmp;
     obj_vertex* cvert;
-    obj_index*  cind;
+    obj_face*  cface;
     int i;
 
     // Locate initial offsets in file
@@ -43,13 +49,16 @@ void read_obj(void* base, void* eof, obj_file* obj) {
     msg_log(LOG_INFO, "Vertex Positions start at 0x%p", vp_base);
     msg_log(LOG_INFO, "Vertex UV Coords start at 0x%p", vt_base);
     msg_log(LOG_INFO, "Vertex Normals start at 0x%p", vn_base);
-    msg_log(LOG_INFO, "Face Indices start at 0x%p", fi_base);
+    msg_log(LOG_INFO, "Faces start at 0x%p", fi_base);
 
+    // Once the initial offsets have been located
+    // the real fun starts :D
+    // Let's go through the file and add everything
+    // that we plan on loading to a linked list.
     i= 0;
     tmp = vp_base;
     cvert = &obj->verts;
     while(tmp < (char*)eof) {
-        //printf("position tmp=%p\n", tmp);
         if(*tmp == 'v' && isspace(*(tmp + 1))) {
             cvert->pos = tmp + 2;
             cvert->next = malloc(sizeof(obj_vertex));
@@ -59,11 +68,11 @@ void read_obj(void* base, void* eof, obj_file* obj) {
         while(*(tmp++) != '\n' && tmp < (char*)eof);
     }
     msg_log(LOG_INFO, "%d Vertices", i);
+    obj->vert_count = i;
 
     tmp = vt_base;
     cvert = &obj->verts;
     while(tmp < (char*)eof) {
-        //printf("texture tmp=%p\n", tmp);
         if(*tmp == 'v' && *(tmp + 1) == 't') {
             cvert->tex = tmp;
             cvert = cvert->next;
@@ -74,7 +83,6 @@ void read_obj(void* base, void* eof, obj_file* obj) {
     tmp = vn_base;
     cvert = &obj->verts;
     while(tmp < (char*)eof) {
-        //printf("normal tmp=%p\n", tmp);
         if(*tmp == 'v' && *(tmp + 1) == 'n') {
             cvert->norm = tmp;
             cvert = cvert->next;
@@ -85,25 +93,25 @@ void read_obj(void* base, void* eof, obj_file* obj) {
     i = 0;
     tmp = fi_base;
     cvert = NULL;
-    cind = &obj->inds;
+    cface = &obj->faces;
     while(tmp < (char*)eof) {
-        //printf("index tmp=%p\n", tmp);
         if(*tmp == 'f' && isspace(*(tmp + 1))) {
-            cind->index = tmp;
-            cind->next = malloc(sizeof(obj_index));
-            cind = cind->next;
+            cface->face = tmp;
+            cface->next = malloc(sizeof(obj_face));
+            cface = cface->next;
             i++;
         }
         while(*(tmp++) != '\n' && tmp < (char*)eof);
     }
-    msg_log(LOG_INFO, "%d Indices", i);
+    msg_log(LOG_INFO, "%d Faces", i);
+    obj->face_count = i;
 }
 
 void free_obj(obj_file* obj) {
     obj_vertex* vert_root = &obj->verts;
-    obj_index*  ind_root = &obj->inds;
+    obj_face*  face_root = &obj->faces;
     obj_vertex* cvert;
-    obj_index*  cind;
+    obj_face*  cface;
 
     while(vert_root->next != NULL) {
         cvert = vert_root;
@@ -112,20 +120,18 @@ void free_obj(obj_file* obj) {
             tmp = cvert;
             cvert = cvert->next;
         }
-        //printf("Freeing Vertex %p\n", cvert);
         free(cvert);
         tmp->next = NULL;
     }
 
-    while(ind_root->next != NULL) {
-        cind = ind_root;
-        obj_index* tmp;
-        while(cind->next != NULL) {
-            tmp = cind;
-            cind = cind->next;
+    while(face_root->next != NULL) {
+        cface = face_root;
+        obj_face* tmp;
+        while(cface->next != NULL) {
+            tmp = cface;
+            cface = cface->next;
         }
-        //printf("Freeing Index %p\n", cind);
-        free(cind);
+        free(cface);
         tmp->next = NULL;
     }
 }
