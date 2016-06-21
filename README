@@ -1,5 +1,4 @@
-This program is intended to load vertex and face data from Wavefront .obj files.
-It is currently undergoing heavy revision, and is subject to break unexpectedly as I continue to mess with it.
+This program will load and parse (some) of the data contained in a Wavefront .obj file. Namely, it reads the vertex and face data, and fills out an internal structure with that information.
+All n-sided polygons contained within the file will be converted to triangles upon being loaded.
 
-Currently written only to run on Linux systems, as it strays away from a lot of the standard library functions. At some point I may change that once
-I get it working at all.
+Doesn't display the contents or anything fancy like that (yet), but maybe some day I'll get around to adding functionality like that, once the program itself works at all.
