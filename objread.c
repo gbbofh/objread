@@ -1,12 +1,11 @@
 #include "objread.h"
 #include "common.h"
 
-/*
- * READ_OBJ(VOID* BASE, VOID* EOF, OBJ_FILE* OBJ)
- * Fills a buffer (obj_file struct) with offsets to
- * data within the file. These offsets point to:
- * Vertex position, texture, and normal data, as well
- * as information for face/triangle indices.
+/* ========================================
+ * void read_obj(void* base, void* eof, obj_file* obj)
+ * ========================================
+ * Reads the contents of an obj from some region of memory
+ * and fills out an obj_file struct with its contents.
 */
 void read_obj(void* base, void* eof, obj_file* obj) {
     char*       vp_base = base;
@@ -107,6 +106,11 @@ void read_obj(void* base, void* eof, obj_file* obj) {
     obj->face_count = i;
 }
 
+/* ========================================
+ * void free_obj(obj_file* obj)
+ * ========================================
+ * Performs memory deallocation for an obj_file struct.
+*/
 void free_obj(obj_file* obj) {
     obj_vertex* vert_root = &obj->verts;
     obj_face*  face_root = &obj->faces;

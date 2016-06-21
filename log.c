@@ -4,19 +4,14 @@
 
 static int logfd = -1;
 
+/* ========================================
+ * void open_log()
+ * ========================================
+ * creates a new log file in the current working directory.
+ * Will delete an existing log file, and create a new one.
+*/
 void open_log() {
     struct stat st;
-/*    char buf[PATH_MAX];
-    struct stat st;
-    if(stat(LOGPATH, &st) == -1) {
-        if(mkdir(LOGPATH, 0700) != -1) {
-            memset(buf, 0, PATH_MAX);
-            getcwd(buf, PATH_MAX);
-            chdir(LOGPATH);
-        }
-        logfd = open(LOGNAME, O_CREAT|O_RDWR, S_IRUSR|S_IRGRP|S_IROTH);
-        chdir(buf);
-    }*/
     if(stat(LOGNAME, &st) != -1) {
         unlink(LOGNAME);
     }
@@ -26,6 +21,11 @@ void open_log() {
     }
 }
 
+/* ========================================
+ * void close_log()
+ * ========================================
+ * Closes log file.
+*/
 void close_log() {
     if(logfd >= 0) {
         close(logfd);
@@ -33,6 +33,11 @@ void close_log() {
     }
 }
 
+/* ========================================
+ * void msg_log(const int level, const char* fmt, ...)
+ * ========================================
+ * Writes a message to the log file (if it is open).
+*/
 void msg_log(const int level, const char* format, ...) {
     char buffer[256];
     if(logfd >= 0) {
@@ -57,6 +62,11 @@ void msg_log(const int level, const char* format, ...) {
     }
 }
 
+/* ========================================
+ * void console_log(const int level, const char* fmt, ...)
+ * ========================================
+ * Writes a message to stdout.
+*/
 void console_log(const int level, const char* format, ...) {
     char buffer[256];
         switch(level) {

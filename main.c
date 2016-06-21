@@ -2,6 +2,12 @@
 #include "objread.h"
 #include "mesh.h"
 
+/* ========================================
+ * struct file_desc
+ * ========================================
+ * Wraps around a file path, file descriptor,
+ * file status, and the address that it is mapped to.
+*/
 typedef struct {
     char* path;
     int fdesc;
@@ -37,6 +43,12 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
+/* ========================================
+ * bool open_file(file_desc* fd)
+ * ========================================
+ * Opens a file on the disk, and maps it to
+ * memory.
+*/
 bool open_file(file_desc* fd) {
     fd->fdesc = open(fd->path, O_RDONLY);
 
@@ -61,19 +73,15 @@ bool open_file(file_desc* fd) {
     return true;
 }
 
+/* ========================================
+ * void close_file(file_desc* fd)
+ * ========================================
+ * Unmaps an open file from memory and closes
+ * the file descriptor.
+*/
 void close_file(file_desc* fd) {
     msg_log(LOG_INFO, "Unmapping %s from 0x%p", fd->path, fd->addr);
     munmap(fd->addr, fd->fstat.st_size);
     close(fd->fdesc);
     memset(fd, 0, sizeof(file_desc));
 }
-
-/*int test_triang(char* teststr) {
-    int inds = 0;
-    while(*teststr != '\n') {
-        if(isdigit(*teststr)) inds++;
-        while(isdigit(*teststr) && *(teststr + 1) != '\n') teststr++;
-        teststr++;
-    }
-    return (inds - 2) * 3;
-}*/
