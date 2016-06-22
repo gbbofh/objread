@@ -1,6 +1,11 @@
 #include "objread.h"
 #include "common.h"
 
+/* TODO:
+ * + Add support for objects and groups.
+*/
+
+
 /* ========================================
  * void read_obj(void* base, void* eof, obj_file* obj)
  * ========================================
@@ -8,14 +13,14 @@
  * and fills out an obj_file struct with its contents.
 */
 void read_obj(void* base, void* eof, obj_file* obj) {
-    char*       vp_base = base;
-    char*       vt_base = base;
-    char*       vn_base = base;
-    char*       fi_base = base;
-    char*       tmp;
-    obj_vertex* cvert;
-    obj_face*  cface;
-    int i;
+    char*       vp_base = base; // Offset to base of vertex positions
+    char*       vt_base = base; // Offset to base of vertex textures
+    char*       vn_base = base; // Offset to base of vertex normals
+    char*       fi_base = base; // Offset to base of face indices
+    char*       tmp;            // Misc. temp pointer
+    obj_vertex* cvert;          // Used to fill out vertex linked list
+    obj_face*  cface;           // Used to fill out face linked list
+    int i;                      // Used to keep track of vert/face count
 
     // Locate initial offsets in file
     // Would like to come up with easier/shorter/prettier way to do this.
@@ -64,6 +69,10 @@ void read_obj(void* base, void* eof, obj_file* obj) {
             cvert = cvert->next;
             i++;
         }
+        // Could be a good idea to check if tmp < eof before
+        // incrementing tmp and checking for new line?
+        // Not sure if this could cause some sort of obscure
+        // scenario in which the program crashes...
         while(*(tmp++) != '\n' && tmp < (char*)eof);
     }
     msg_log(LOG_INFO, "%d Vertices", i);
